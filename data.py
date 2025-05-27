@@ -12,13 +12,8 @@ from ttkthemes import ThemedStyle
 file_path = "student-mat.csv"
 data_sucia = pd.read_csv(file_path, sep=';')
 
-with open("data_sucia.txt", "w", encoding="utf-8") as archivo:
-    archivo.write(data_sucia.to_string())
-
-
-
-
-
+with open("data_sucia.csv", "w", encoding="utf-8") as archivo:
+    archivo.write(data_sucia.to_csv(sep=";"))
 
 
 # Handle Missing Values
@@ -26,7 +21,7 @@ data = data_sucia.dropna().copy()
 
 
 # Remove Duplicates
-#data.drop_duplicates(subset='id_student', inplace=True)  # Drop duplicates based on 'StudentID' 
+data.drop_duplicates(subset='id_student', inplace=True)  # Drop duplicates based on 'StudentID' 
 
 # Data preprocessing - handle missing values or categorical variables
 # For categorical variables, we'll use one-hot encoding
@@ -37,8 +32,10 @@ data = pd.get_dummies(data, columns=['school', 'sex', 'address', 'famsize', 'Pst
                                      'famsup', 'paid', 'activities', 'nursery', 'higher',
                                      'internet', 'romantic'], drop_first=True)
 # Select features and target variable
-features = data.drop(columns=['G3'])  # Features: all columns except 'G3' (final grade)
+features = data.drop(columns=['G3', 'id_student'])# Features: all columns except 'G3' (final grade)
 target = data['G3']  # Target variable: 'G3' (final grade)
+
+#print(features.columns.tolist()) #MUESTRA LAS VARIABLES QUE USARA PARA ENTRENAR EL MODELO 
 
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
@@ -53,9 +50,12 @@ y_pred = model.predict(X_test)
 # Evaluate the model
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
+print(f"Evaluacion del modelo (R^2):: {r2}")
 
-with open("data_limpia.txt", "w", encoding="utf-8") as archivo:
-    archivo.write(data.to_string())
+
+#GUARDA LA VERCION DE LOS DATOS LIMPIOS
+with open("data_limpia.csv", "w", encoding="utf-8") as archivo:
+    archivo.write(data.to_csv(sep=";"))
 
 # Function to perform the prediction and display the result on the GUI
 def predict_grade():
@@ -70,6 +70,7 @@ def predict_grade():
                 'G2': [G2_input],      # Second-period grade
                 'studytime': [study_time_input], # Weekly study time (hours)
             })
+            print(new_student_features)
                         # Perform one-hot encoding for the new student data and align with training data
             new_student_features_encoded = pd.get_dummies(new_student_features, drop_first=True)
             new_student_features_encoded = new_student_features_encoded.align(features, join='right', axis=1, fill_value=0)[0]
